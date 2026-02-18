@@ -1,22 +1,12 @@
 <?php
 declare(strict_types=1);
 
-/**
- * TechTrade - Homepage (Index)
- * 
- * This file handles the display of the main product catalog, feature highlights,
- * and the "About Us" section. It supports category filtering and wishlist interactions.
- */
+
 
 require_once __DIR__ . "/../config/db.php";
 require_once __DIR__ . "/../config/auth.php";
 
-/* 
- * ============================================================
- * 1. CATEGORY FILTERING LOGIC
- * ============================================================
- * Fetch all unique categories from the database to populate the filter dropdown.
- */
+
 $categories = $pdo->query("SELECT DISTINCT category FROM products ORDER BY category ASC")->fetchAll(PDO::FETCH_COLUMN);
 if (empty($categories)) {
     $categories = [];
@@ -30,12 +20,7 @@ if (!in_array($selected, $categories, true)) {
   $selected = "All"; // Fallback if invalid category
 }
 
-/* 
- * ============================================================
- * 2. PRODUCT FETCHING LOGIC
- * ============================================================
- * Fetch products based on the selected category.
- */
+
 if ($selected === "All") {
   // Fetch all products
   $stmt = $pdo->query("
@@ -55,12 +40,7 @@ if ($selected === "All") {
 }
 $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* 
- * ============================================================
- * 3. USER STATE & WISHLIST
- * ============================================================
- * Check if user is logged in and fetch their wishlist for heart icon status.
- */
+
 $loggedIn = is_logged_in();
 
 // Wishlist IDs for the current user

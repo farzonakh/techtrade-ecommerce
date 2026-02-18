@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $DB_HOST = "127.0.0.1";
-$DB_PORT = "3307"; //  put YOUR MySQL port here
+$DB_PORT = "3307"; 
 $DB_NAME = "ecommerce_db";
 $DB_USER = "root";
 $DB_PASS = "";     // XAMPP default is empty on macOS

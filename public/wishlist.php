@@ -23,7 +23,7 @@ $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // Get IDs for render_product_card (all these are in wishlist by definition, but for compatibility)
 $wishIds = array_map(fn($p) => (int)$p['id'], $products);
 
-/* ---------- HELPERS (Duplicated from index.php for now, ideally should be in a common file) ---------- */
+
 function short_text(string $text, int $limit = 140): string {
   $text = trim($text);
   if ($text === "") return "";

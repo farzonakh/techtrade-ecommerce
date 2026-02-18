@@ -1,8 +1,8 @@
 <?php
-declare(strict_types=1);
+declare(strict_types=1);//enabled strict typing to reduce unexpected type conversion bugs
 
 require_once __DIR__ . "/../config/auth.php";
-require_admin();
+require_admin(); //ensures authorization before any admin page logic runs, preventing URL bypass
 
 // DB Stats
 require_once __DIR__ . "/../config/db.php";

@@ -1,13 +1,6 @@
 <?php
 declare(strict_types=1);
 
-/**
- * TechTrade - Checkout Page
- * 
- * This file handles the checkout process. It verifies the user is logged in,
- * checks if the cart is not empty, calculates totals, and displays the order summary
- * and payment form.
- */
 
 require_once __DIR__ . "/../config/db.php";
 require_once __DIR__ . "/../config/auth.php";
@@ -15,12 +8,7 @@ require_once __DIR__ . "/../config/auth.php";
 // Ensure user is logged in before accessing checkout
 require_login();
 
-/* 
- * ============================================================
- * 1. CART VALIDATION
- * ============================================================
- * If cart is empty, redirect back to cart page.
- */
+
 $cart = $_SESSION["cart"] ?? [];
 if (empty($cart)) {
     header("Location: /ecommerce/public/cart.php");
@@ -30,12 +18,7 @@ if (empty($cart)) {
 $items = [];
 $total = 0.0;
 
-/* 
- * ============================================================
- * 2. ORDER CALCULATION
- * ============================================================
- * Fetch product details for items in the cart and calculate totals.
- */
+
 $ids = array_map("intval", array_keys($cart));
 $placeholders = implode(",", array_fill(0, count($ids), "?"));
 

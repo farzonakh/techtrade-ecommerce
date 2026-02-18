@@ -43,7 +43,7 @@ include __DIR__ . "/includes/header.php";
             <td style="color:var(--text-muted); font-family:monospace;">#<?= (int)$p["id"] ?></td>
             <td>
                 <?php if (!empty($p["image_url"])): ?>
-                    <img src="<?= htmlspecialchars($p["image_url"]) ?>" alt="" class="product-thumb">
+                    <img  style="height:600px; width: 600px" src="<?= htmlspecialchars($p["image_url"]) ?>" alt="" class="product-thumb">
                 <?php else: ?>
                     <div class="product-thumb" style="display:flex;align-items:center;justify-content:center;color:white;opacity:0.5;font-size:0.8rem">No Img</div>
                 <?php endif; ?>

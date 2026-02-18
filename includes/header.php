@@ -1,6 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    session_start(); //Without session → navigation logic fails 
 }
 // Helper to get active class
 function isActive($path) {
