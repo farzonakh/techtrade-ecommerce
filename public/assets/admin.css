@@ -170,6 +170,20 @@ body.admin-body {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+.product-thumb-large {
+    width: 600px;
+    height: 600px;
+}
+
+.product-thumb-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    opacity: 0.5;
+    font-size: 0.8rem;
+}
+
 /*
   Action Bar
 */
@@ -185,4 +199,14 @@ body.admin-body {
 .page-title h2 {
     font-size: 1.75rem;
     font-weight: 700;
+}
+
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.text-semibold {
+    font-weight: 600;
 }
