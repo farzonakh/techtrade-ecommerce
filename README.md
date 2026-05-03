@@ -20,6 +20,7 @@ TechTrade is a PHP e-commerce demo project for buying and managing technology pr
 
 - PHP
 - MySQL
+
 - PDO prepared statements
 - HTML
 - CSS
@@ -126,26 +127,4 @@ The project supports:
 
 The language switch is shown in the header using flag links.
 
-## CSS Organization
 
-CSS is separated for easier editing:
-
-- `style.css` contains colors, variables, reset, and typography.
-- `layout.css` contains containers, grid, flex, spacing, and list helpers.
-- `components.css` contains buttons, cards, forms, tables, alerts, hero, and footer.
-- `admin.css` contains admin-only layout and UI styles.
-
-## Exam Notes
-
-This project is organized to be easy to explain:
-
-- PHP logic is kept at the top of pages.
-- HTML layout is placed below the PHP logic.
-- Shared UI is reused through `header.php`, `footer.php`, and `product_card.php`.
-- Database access uses PDO and prepared statements.
-- Authentication and session logic are centralized in `config/auth.php`.
-- Translations are handled with a simple `t("key")` function.
-
-## Author
-
-TechTrade was built as a PHP e-commerce project for learning, practice, and exam presentation.
