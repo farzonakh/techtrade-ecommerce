@@ -5,19 +5,29 @@ require_once __DIR__ . "/../config/db.php";
 require_once __DIR__ . "/../config/auth.php";
 require_admin();
 
+// Load existing values for category and condition suggestions.
 $categories = $pdo->query("SELECT DISTINCT category FROM products ORDER BY category ASC")->fetchAll(PDO::FETCH_COLUMN);
 $conditions = $pdo->query("SELECT DISTINCT item_condition FROM products ORDER BY item_condition ASC")->fetchAll(PDO::FETCH_COLUMN);
 
-// Defaults if empty
-if (empty($categories)) $categories = ["Phones", "Headphones", "Laptops", "Accessories"];
-if (empty($conditions)) $conditions = ["new", "used"];
+if (empty($categories)) {
+  $categories = ["Phones", "Headphones", "Laptops", "Accessories"];
+}
+
+if (empty($conditions)) {
+  $conditions = ["new", "used"];
+}
 
 $id = (int)($_GET["id"] ?? 0);
 if ($id <= 0) {
   die("Invalid product id");
 }
 
-$stmt = $pdo->prepare("SELECT * FROM products WHERE id = ?");
+// Get the product that the admin wants to edit.
+$stmt = $pdo->prepare("
+  SELECT id, name, description, price, image_url, category, item_condition, stock, featured
+  FROM products
+  WHERE id = ?
+");
 $stmt->execute([$id]);
 $product = $stmt->fetch();
 
@@ -45,16 +55,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $stock = trim($_POST["stock"] ?? "10");
   $featured = isset($_POST["featured"]) ? 1 : 0;
 
-  if ($name === "" || $price === "") {
-    $error = "Name and price are required 🙂";
+  if ($name === "") {
+    $error = "Oops 😅 Name is required";
+  } elseif ($price === "") {
+    $error = "Oops 😅 Price is required";
   } elseif (!is_numeric($price) || (float)$price <= 0) {
-    $error = "Price must be a positive number 💶";
+    $error = "Price must be valid 💶";
   } elseif ($category === "") {
-    $error = "Category is required 😅";
+    $error = "Oops 😅 Category is required";
   } elseif ($item_condition === "") {
-    $error = "Condition is required 😅";
+    $error = "Oops 😅 Condition is required";
   } elseif (!ctype_digit($stock) || (int)$stock < 0) {
-    $error = "Stock must be 0 or more 📦";
+    $error = "Stock too low 📦";
   } else {
     $upd = $pdo->prepare("
       UPDATE products
@@ -86,29 +98,29 @@ include __DIR__ . "/includes/header.php";
         <h2>Edit Product</h2>
         <p class="text-muted">Update product details</p>
     </div>
-    <div style="display:flex; gap:0.5rem;">
+    <div class="admin-action-group">
         <a href="/ecommerce/admin/product_delete.php?id=<?= $id ?>" class="btn btnDanger" onclick="return confirm('Delete this product?')">Delete</a>
         <a href="/ecommerce/admin/products.php" class="btn">← Back to Products</a>
     </div>
 </div>
 
 <?php if ($error): ?>
-<div class="card" style="margin-bottom: var(--space-md); border-color: var(--danger); background-color: rgba(239, 68, 68, 0.1);">
+<div class="card alert alert-danger">
     <div class="cardBody">
-        <p class="text-danger" style="margin:0; font-weight:500;">⚠️ <?= htmlspecialchars($error) ?></p>
+        <p class="alert-title text-danger">⚠️ <?= htmlspecialchars($error) ?></p>
     </div>
 </div>
 <?php endif; ?>
 
-<div class="form-box" style="max-width: 800px; margin: 0;">
+<div class="form-box admin-form-wide">
   <form method="POST">
-    <div class="grid" style="grid-template-columns: 2fr 1fr; gap: var(--space-lg);">
+    <div class="grid grid-2-1 gap-lg">
         
         <!-- Left Column -->
         <div>
             <div class="form-group">
                 <label class="form-label">Product Name</label>
-                <input class="form-input" name="name" value="<?= htmlspecialchars($name) ?>" required placeholder="e.g. iPhone 15 Pro">
+                <input class="form-input" name="name" value="<?= htmlspecialchars($name) ?>" placeholder="e.g. iPhone 15 Pro">
             </div>
 
             <div class="form-group">
@@ -116,14 +128,14 @@ include __DIR__ . "/includes/header.php";
                 <textarea class="form-input" name="description" rows="6" placeholder="Product details..."><?= htmlspecialchars($description) ?></textarea>
             </div>
 
-            <div class="grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="grid grid-2-cols">
                  <div class="form-group">
                     <label class="form-label">Price (€)</label>
-                    <input class="form-input" name="price" value="<?= htmlspecialchars($price) ?>" required placeholder="0.00">
+                    <input class="form-input" name="price" value="<?= htmlspecialchars($price) ?>" placeholder="0.00">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Stock</label>
-                    <input class="form-input" name="stock" value="<?= htmlspecialchars($stock) ?>" required placeholder="Quantity">
+                    <input class="form-input" name="stock" value="<?= htmlspecialchars($stock) ?>" placeholder="Quantity">
                 </div>
             </div>
             
@@ -137,7 +149,7 @@ include __DIR__ . "/includes/header.php";
         <div>
              <div class="form-group">
                 <label class="form-label">Category</label>
-                <input class="form-input" list="category_list" name="category" value="<?= htmlspecialchars($category) ?>" required>
+                <input class="form-input" list="category_list" name="category" value="<?= htmlspecialchars($category) ?>">
                 <datalist id="category_list">
                   <?php foreach ($categories as $c): ?>
                     <option value="<?= htmlspecialchars($c) ?>">
@@ -147,7 +159,7 @@ include __DIR__ . "/includes/header.php";
 
             <div class="form-group">
                 <label class="form-label">Condition</label>
-                <input class="form-input" list="condition_list" name="item_condition" value="<?= htmlspecialchars($item_condition) ?>" required>
+                <input class="form-input" list="condition_list" name="item_condition" value="<?= htmlspecialchars($item_condition) ?>">
                 <datalist id="condition_list">
                   <?php foreach ($conditions as $cond): ?>
                     <option value="<?= htmlspecialchars($cond) ?>">
@@ -156,15 +168,15 @@ include __DIR__ . "/includes/header.php";
             </div>
 
             <div class="form-group">
-                <label class="form-label" style="cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
-                  <input type="checkbox" name="featured" value="1" <?= $featured ? "checked" : "" ?> style="width:auto;">
+                <label class="form-label admin-checkbox-label">
+                  <input type="checkbox" name="featured" value="1" <?= $featured ? "checked" : "" ?> class="admin-checkbox">
                   Featured ⭐
                 </label>
-                <p class="text-muted" style="font-size:0.8rem; margin-top:0.25rem;">Show this product at the top of the list.</p>
+                <p class="admin-help-text">Show this product at the top of the list.</p>
             </div>
 
             <div class="mt-lg">
-                <button type="submit" class="btn btnPrimary" style="width:100%;">Update Product</button>
+                <button type="submit" class="btn btnPrimary w-100">Update Product</button>
             </div>
         </div>
         

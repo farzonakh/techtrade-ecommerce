@@ -15,6 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $email = trim($_POST["email"] ?? "");
   $password = $_POST["password"] ?? "";
 
+  // Get the user account by email.
   $stmt = $pdo->prepare("SELECT id, full_name, email, password_hash, role FROM users WHERE email = ?");
   $stmt->execute([$email]);
   $user = $stmt->fetch();
@@ -22,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   if (!$user || !password_verify($password, $user["password_hash"])) {
     $error = "Invalid email or password";
   } else {
-    // Session is started by auth.php or header.php later, but we need it now for assignment
+    // Save the logged-in user in the session.
     if (session_status() === PHP_SESSION_NONE) session_start();
     
     $_SESSION["user"] = [
@@ -37,7 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   }
 }
 
-// Include header AFTER logic to avoid "headers already sent" issues if we redirected above
+// Include the layout after redirects are finished.
 include __DIR__ . "/../includes/header.php";
 ?>
 
@@ -48,13 +49,13 @@ include __DIR__ . "/../includes/header.php";
   </div>
 
   <?php if ($info): ?>
-    <div style="background: rgba(34, 197, 94, 0.1); color: var(--success); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; text-align: center;">
+    <div class="form-message form-message-success">
         <?= htmlspecialchars($info) ?>
     </div>
   <?php endif; ?>
 
   <?php if ($error): ?>
-    <div style="background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; text-align: center;">
+    <div class="form-message form-message-error">
         <?= htmlspecialchars($error) ?>
     </div>
   <?php endif; ?>
@@ -70,11 +71,11 @@ include __DIR__ . "/../includes/header.php";
         <input name="password" type="password" class="form-input" required placeholder="••••••••">
     </div>
 
-    <button type="submit" class="btn btnPrimary" style="width: 100%; margin-top: 1rem;">Login</button>
+    <button type="submit" class="btn btnPrimary form-submit">Login</button>
   </form>
 
-  <p class="text-center mt-lg" style="color: var(--text-muted); font-size: 0.9rem;">
-    Don't have an account? <a href="/ecommerce/public/register.php" style="color: var(--primary);">Register</a>
+  <p class="text-center mt-lg text-muted text-xs">
+    Don't have an account? <a href="/ecommerce/public/register.php" class="link-primary">Register</a>
   </p>
 </div>
 

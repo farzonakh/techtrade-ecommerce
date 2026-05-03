@@ -20,7 +20,7 @@ include __DIR__ . "/includes/header.php";
 
 <div class="admin-table-container">
   <?php if (count($products) === 0): ?>
-    <div style="padding: 3rem; text-align:center;">
+    <div class="admin-empty">
         <p class="text-muted">No products found.</p>
         <a href="/ecommerce/admin/product_create.php" class="btn btnPrimary mt-sm">Create One</a>
     </div>
@@ -40,15 +40,15 @@ include __DIR__ . "/includes/header.php";
         <tbody>
         <?php foreach ($products as $p): ?>
             <tr>
-            <td style="color:var(--text-muted); font-family:monospace;">#<?= (int)$p["id"] ?></td>
+            <td class="admin-id">#<?= (int)$p["id"] ?></td>
             <td>
                 <?php if (!empty($p["image_url"])): ?>
-                    <img  style="height:600px; width: 600px" src="<?= htmlspecialchars($p["image_url"]) ?>" alt="" class="product-thumb">
+                    <img src="<?= htmlspecialchars($p["image_url"]) ?>" alt="" class="product-thumb product-thumb-large">
                 <?php else: ?>
-                    <div class="product-thumb" style="display:flex;align-items:center;justify-content:center;color:white;opacity:0.5;font-size:0.8rem">No Img</div>
+                    <div class="product-thumb product-thumb-large product-thumb-placeholder">No Img</div>
                 <?php endif; ?>
             </td>
-            <td style="font-weight:600;"><?= htmlspecialchars($p["name"]) ?></td>
+            <td class="admin-name"><?= htmlspecialchars($p["name"]) ?></td>
             <td><span class="badge"><?= htmlspecialchars($p["category"]) ?></span></td>
             <td class="text-right">€<?= number_format((float)$p["price"], 2) ?></td>
             <td class="text-center">
@@ -57,10 +57,9 @@ include __DIR__ . "/includes/header.php";
                 </span>
             </td>
             <td class="text-right">
-                <a href="/ecommerce/admin/product_edit.php?id=<?= (int)$p["id"] ?>" class="btn" style="padding: 0.25rem 0.75rem; font-size:0.8rem;">Edit</a>
+                <a href="/ecommerce/admin/product_edit.php?id=<?= (int)$p["id"] ?>" class="btn admin-action-small">Edit</a>
                 <a href="/ecommerce/admin/product_delete.php?id=<?= (int)$p["id"] ?>" 
-                    class="btn btnDanger" 
-                    style="padding: 0.25rem 0.75rem; font-size:0.8rem;"
+                    class="btn btnDanger admin-action-small" 
                     onclick="return confirm('Delete <?= htmlspecialchars($p["name"]) ?>?')">Delete</a>
             </td>
             </tr>

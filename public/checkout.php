@@ -5,9 +5,54 @@ declare(strict_types=1);
 require_once __DIR__ . "/../config/db.php";
 require_once __DIR__ . "/../config/auth.php";
 
-// Ensure user is logged in before accessing checkout
+// Only logged-in users can reach checkout.
 require_login();
 
+$validPromoCodes = [
+    "SAVE10" => 0.10,
+    "SAVE20" => 0.20,
+];
+
+// Countries shown in the shipping form.
+$countries = [
+    "Italy",
+    "United States",
+    "Germany",
+    "United Kingdom",
+    "France",
+    "Spain",
+    "Netherlands",
+];
+
+// Simple demo currency settings.
+$currencyRates = [
+    "EUR" => 1.0,
+    "USD" => 1.1,
+];
+$currencySymbols = [
+    "EUR" => "€",
+    "USD" => "$",
+];
+
+$currency = strtoupper(trim($_GET["currency"] ?? ($_SESSION["currency"] ?? "EUR")));
+if (!isset($currencyRates[$currency])) {
+    $currency = "EUR";
+}
+$_SESSION["currency"] = $currency;
+
+$symbol = $currencySymbols[$currency];
+$rate = $currencyRates[$currency];
+$promoCode = strtoupper(trim($_GET["promo_code"] ?? ""));
+$discountRate = $validPromoCodes[$promoCode] ?? 0.0;
+$promoMessage = "";
+
+if ($promoCode !== "") {
+    if ($discountRate > 0) {
+        $promoMessage = "Promo code {$promoCode} applied 🎉";
+    } else {
+        $promoMessage = "Invalid promo code ❌";
+    }
+}
 
 $cart = $_SESSION["cart"] ?? [];
 if (empty($cart)) {
@@ -17,99 +62,148 @@ if (empty($cart)) {
 
 $items = [];
 $total = 0.0;
+$stockWarnings = [];
+$checkoutError = $_SESSION["checkout_error"] ?? "";
 
+// Show checkout errors once, then remove them from the session.
+if ($checkoutError !== "") {
+    unset($_SESSION["checkout_error"]);
+}
 
 $ids = array_map("intval", array_keys($cart));
 $placeholders = implode(",", array_fill(0, count($ids), "?"));
 
-// Fetch only necessary product fields
+// Get current product details before showing the checkout page.
 $stmt = $pdo->prepare("
-SELECT id, name, price
-FROM products
-WHERE id IN ($placeholders)
+    SELECT id, name, price, stock
+    FROM products
+    WHERE id IN ($placeholders)
 ");
 $stmt->execute($ids);
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Process each item to build the order summary
+// Build the order summary and warn if stock has changed.
 foreach ($rows as $p) {
     $pid = (int)$p["id"];
     $qty = (int)($cart[$pid] ?? 0);
+    $currentStock = (int)($p["stock"] ?? 0);
     
-    // Skip invalid quantities
     if ($qty <= 0) continue;
 
     $price = (float)$p["price"];
     $sum = $price * $qty;
 
+    if ($currentStock < $qty) {
+        $stockWarnings[] = [
+            "id" => $pid,
+            "name" => (string)$p["name"],
+            "requested" => $qty,
+            "available" => $currentStock
+        ];
+    }
+
     $items[] = [
+        "id" => $pid,
         "name" => (string)$p["name"],
         "price" => $price,
         "qty" => $qty,
+        "current_stock" => $currentStock,
         "sum" => $sum
     ];
 
     $total += $sum;
 }
 
+$discountAmount = $discountRate > 0 ? $total * $discountRate : 0.0;
+$finalTotal = $total - $discountAmount;
+
+function money(float $amount, string $symbol, float $rate): string
+{
+    return $symbol . number_format($amount * $rate, 2);
+}
+
 include __DIR__ . "/../includes/header.php";
 ?>
 
+<?php if ($checkoutError !== ""): ?>
+    <div class="card alert alert-danger">
+        <div class="cardBody">
+            <p class="alert-title text-danger">⚠️ Order Failed</p>
+            <p class="alert-text text-danger pre-wrap">
+                <?= htmlspecialchars($checkoutError) ?>
+            </p>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if ($stockWarnings): ?>
+    <div class="card alert alert-warning">
+        <div class="cardBody">
+            <p class="alert-title text-stock-warning">⚠️ <?= t("stock_changed") ?></p>
+            <p class="alert-text text-warning">
+                <?= t("stock_too_low") ?> 📦:
+            </p>
+            <ul class="alert-list">
+                <?php foreach ($stockWarnings as $w): ?>
+                    <li class="text-warning">
+                        <strong><?= htmlspecialchars($w["name"]) ?></strong> - 
+                        <?= t("available") ?>: <?= (int)$w["available"] ?>, 
+                        <?= t("requested") ?>: <?= (int)$w["requested"] ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <p class="alert-text text-warning">
+                You can still click Pay; stock will be checked again before the order is saved.
+            </p>
+        </div>
+    </div>
+<?php endif; ?>
+
 <div class="sectionHeader">
     <div>
-        <h2 class="sectionTitle">Checkout 🛍️</h2>
-        <p class="sectionSub">Secure Checkpoint</p>
+        <h2 class="sectionTitle"><?= t("checkout") ?> 🛍️</h2>
+        <p class="sectionSub"><?= t("secure_checkpoint") ?></p>
     </div>
-    <a href="/ecommerce/public/cart.php" class="btn">← Back to Cart</a>
+    <a href="/ecommerce/public/cart.php" class="btn">← <?= t("back_to_cart") ?></a>
 </div>
 
-<div class="grid" style="grid-template-columns: 2fr 1fr; gap: var(--space-lg);">
+<div class="grid grid-2-1 gap-lg">
 
     <!-- Left: Shipping & Payment -->
     <div class="card">
         <div class="cardBody">
-            <h3 class="cardTitle" style="margin-bottom:var(--space-md);">Shipping Details</h3>
+            <h3 class="cardTitle mb-md"><?= t("shipping_details") ?></h3>
             
             <form id="checkoutForm" action="/ecommerce/public/order_place.php" method="POST">
-                <div class="grid" style="grid-template-columns: 1fr 1fr; gap:var(--space-md);">
+                <input type="hidden" name="promo_code" value="<?= htmlspecialchars($promoCode) ?>">
+                <input type="hidden" name="currency" value="<?= htmlspecialchars($currency) ?>">
+                <div class="grid grid-2-cols gap-md">
                     <div class="form-group">
-                        <label class="form-label">First Name</label>
-                        <input class="form-input" name="first_name" required placeholder="John">
+                        <label class="form-label"><?= t("first_name") ?></label>
+                        <input class="form-input" name="first_name" placeholder="John">
                     </div>
                      <div class="form-group">
-                        <label class="form-label">Last Name</label>
-                        <input class="form-input" name="last_name" required placeholder="Doe">
+                        <label class="form-label"><?= t("last_name") ?></label>
+                        <input class="form-input" name="last_name" placeholder="Doe">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Address</label>
-                    <input class="form-input" name="address" required placeholder="123 Tech Street">
+                    <label class="form-label"><?= t("address") ?></label>
+                    <input class="form-input" name="address" placeholder="123 Tech Street">
                 </div>
 
-                <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap:var(--space-md);">
+                <div class="grid grid-3-cols gap-md">
                     <div class="form-group">
-                        <label class="form-label">City</label>
-                        <input class="form-input" name="city" required placeholder="New York">
+                        <label class="form-label"><?= t("city") ?></label>
+                        <input class="form-input" name="city" placeholder="New York">
                     </div>
                      <div class="form-group">
-                        <label class="form-label">Zip Code</label>
-                        <input class="form-input" name="zip" required placeholder="10001">
+                        <label class="form-label"><?= t("zip_code") ?></label>
+                        <input class="form-input" name="zip" placeholder="10001">
                     </div>
-<?php
-                    // Editable Country List
-                    $countries = [
-                        "Italy",
-                        "United States",
-                        "Germany",
-                        "United Kingdom",
-                        "France",
-                        "Spain",
-                        "Netherlands"
-                    ];
-                    ?>
                     <div class="form-group">
-                        <label class="form-label">Country</label>
+                        <label class="form-label"><?= t("country") ?></label>
                         <select class="form-input" name="country">
                             <?php foreach ($countries as $country): ?>
                                 <option value="<?= htmlspecialchars($country) ?>"><?= htmlspecialchars($country) ?></option>
@@ -118,18 +212,18 @@ include __DIR__ . "/../includes/header.php";
                     </div>
                 </div>
 
-                <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:var(--space-lg) 0;">
+                <hr class="divider">
 
-                <h3 class="cardTitle" style="margin-bottom:var(--space-md);">Payment Details</h3>
+                <h3 class="cardTitle mb-md"><?= t("payment_details") ?></h3>
                 
                 <div class="form-group">
-                    <label class="form-label">Card Number</label>
+                    <label class="form-label"><?= t("card_number") ?></label>
                     <input class="form-input" placeholder="0000 0000 0000 0000">
                 </div>
 
-                <div class="grid" style="grid-template-columns: 1fr 1fr; gap:var(--space-md);">
+                <div class="grid grid-2-cols gap-md">
                     <div class="form-group">
-                        <label class="form-label">Expiry</label>
+                        <label class="form-label"><?= t("expiry") ?></label>
                         <input class="form-input" placeholder="MM/YY">
                     </div>
                      <div class="form-group">
@@ -139,8 +233,8 @@ include __DIR__ . "/../includes/header.php";
                 </div>
 
                 <div class="mt-lg">
-                    <button type="submit" class="btn btnPrimary" style="width:100%; padding:1rem; font-size:1.1rem;">Pay €<?= number_format($total, 2) ?></button>
-                    <p class="text-center mt-sm text-muted" style="font-size:0.8rem;">🔒 Secure Encrypted Transaction</p>
+                    <button type="submit" class="btn btnPrimary w-100 checkout-button"><?= t("pay") ?> <?= money($finalTotal, $symbol, $rate) ?></button>
+                    <p class="text-center mt-sm text-muted text-xs"><?= t("demo_payment") ?></p>
                 </div>
             </form>
         </div>
@@ -148,21 +242,58 @@ include __DIR__ . "/../includes/header.php";
 
     <!-- Right: Order Summary -->
     <div>
-        <div class="card" style="position:sticky; top:100px;">
+        <div class="card card-sticky">
             <div class="cardBody">
-                <h3 class="cardTitle">Order Summary</h3>
-                <ul style="margin-top:var(--space-md);">
+                <h3 class="cardTitle"><?= t("order_summary") ?></h3>
+                <form method="GET" class="summary-form">
+                    <input type="hidden" name="lang" value="<?= htmlspecialchars($lang) ?>">
+                    <div class="form-group form-group-compact">
+                        <label class="form-label"><?= t("currency") ?></label>
+                        <select class="form-input" name="currency" onchange="this.form.submit()">
+                            <option value="EUR" <?= $currency === "EUR" ? "selected" : "" ?>>EUR (€)</option>
+                            <option value="USD" <?= $currency === "USD" ? "selected" : "" ?>>USD ($)</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-group-compact">
+                        <label class="form-label"><?= t("promo_code") ?></label>
+                        <div class="promo-row">
+                            <input class="form-input flex-1" name="promo_code" value="<?= htmlspecialchars($promoCode) ?>" placeholder="SAVE10">
+                            <button type="submit" class="btn"><?= t("apply") ?></button>
+                        </div>
+                    </div>
+                    <?php if ($promoMessage): ?>
+                        <p class="m-0 text-xs font-semibold <?= $discountRate > 0 ? 'text-success' : 'text-danger' ?>">
+                            <?= htmlspecialchars($promoMessage) ?>
+                        </p>
+                    <?php endif; ?>
+                </form>
+                <ul class="order-summary-list">
                     <?php foreach ($items as $it): ?>
-                    <li style="display:flex; justify-content:space-between; margin-bottom:var(--space-sm); font-size:0.9rem;">
-                        <span><?= (int)$it['qty'] ?>x <?= htmlspecialchars($it['name']) ?></span>
-                        <span>€<?= number_format($it['sum'], 2) ?></span>
+                    <li class="order-summary-item">
+                        <div>
+                            <div><?= (int)$it['qty'] ?>x <?= htmlspecialchars($it['name']) ?></div>
+                            <div class="text-xs text-muted mt-xs">
+                                <?= t("stock") ?>: <?= (int)$it['current_stock'] ?>
+                            </div>
+                        </div>
+                        <span><?= money((float)$it['sum'], $symbol, $rate) ?></span>
                     </li>
                     <?php endforeach; ?>
                 </ul>
-                <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:var(--space-sm) 0;">
-                <div style="display:flex; justify-content:space-between; font-weight:700; font-size:1.2rem;">
-                    <span>Total</span>
-                    <span style="color:var(--accent);">€<?= number_format($total, 2) ?></span>
+                <hr class="divider divider-sm">
+                <div class="summary-row text-muted">
+                    <span><?= t("subtotal") ?></span>
+                    <span><?= money($total, $symbol, $rate) ?></span>
+                </div>
+                <?php if ($discountAmount > 0): ?>
+                    <div class="summary-row text-success">
+                        <span><?= t("discount") ?> <?= htmlspecialchars($promoCode) ?></span>
+                        <span>-<?= money($discountAmount, $symbol, $rate) ?></span>
+                    </div>
+                <?php endif; ?>
+                <div class="order-summary-total">
+                    <span><?= t("total") ?></span>
+                    <span class="text-accent"><?= money($finalTotal, $symbol, $rate) ?></span>
                 </div>
             </div>
         </div>

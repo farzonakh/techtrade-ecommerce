@@ -11,7 +11,7 @@ if ($orderId <= 0) {
     exit;
 }
 
-// Fetch Order Info
+// Fetch order information.
 $stmt = $pdo->prepare("
     SELECT o.id, o.total, u.full_name, u.email, o.created_at
     FROM orders o
@@ -25,7 +25,7 @@ if (!$order) {
     die("Order not found");
 }
 
-// Fetch Order Items
+// Fetch products inside this order.
 $stmtItems = $pdo->prepare("
     SELECT oi.quantity, oi.price, p.name 
     FROM order_items oi
@@ -46,10 +46,10 @@ include __DIR__ . "/includes/header.php";
     <a href="/ecommerce/admin/orders.php" class="btn">← Back to Orders</a>
 </div>
 
-<div class="grid" style="grid-template-columns: 2fr 1fr; gap:var(--space-lg);">
+<div class="grid grid-2-1 gap-lg">
 
     <!-- Items List -->
-    <div class="card" style="padding:0; overflow:hidden;">
+    <div class="card table-card">
         <table class="admin-table">
             <thead>
                 <tr>
@@ -62,12 +62,12 @@ include __DIR__ . "/includes/header.php";
             <tbody>
                 <?php foreach ($items as $item): ?>
                 <tr>
-                    <td style="font-weight:600;"><?= htmlspecialchars($item['name']) ?></td>
+                    <td class="admin-name"><?= htmlspecialchars($item['name']) ?></td>
                     <td class="text-right">€<?= number_format((float)$item['price'], 2) ?></td>
                     <td class="text-center">
-                        <span class="badge" style="margin:0;"><?= (int)$item['quantity'] ?></span>
+                        <span class="badge badge-compact"><?= (int)$item['quantity'] ?></span>
                     </td>
-                    <td class="text-right" style="color:var(--text-main);">
+                    <td class="text-right text-main">
                         €<?= number_format((float)$item['price'] * (int)$item['quantity'], 2) ?>
                     </td>
                 </tr>
@@ -81,24 +81,28 @@ include __DIR__ . "/includes/header.php";
         <div class="card">
             <div class="cardBody">
                 <h3 class="cardTitle">Customer Info</h3>
-                <div style="margin-bottom:var(--space-md);">
-                    <div style="color:var(--text-muted); font-size:0.9rem;">Name</div>
-                    <div style="font-weight:600;"><?= htmlspecialchars($order['full_name']) ?></div>
+                <div class="mb-md">
+                    <div class="summary-label">Name</div>
+                    <div class="admin-name"><?= htmlspecialchars($order['full_name']) ?></div>
                 </div>
-                <div style="margin-bottom:var(--space-md);">
-                    <div style="color:var(--text-muted); font-size:0.9rem;">Email</div>
+                <div class="mb-md">
+                    <div class="summary-label">Email</div>
                     <div><?= htmlspecialchars($order['email']) ?></div>
                 </div>
+                <div class="mb-md">
+                    <div class="summary-label">Order Date</div>
+                    <div><?= $order['created_at'] ? htmlspecialchars(date('M j, Y H:i', strtotime((string)$order['created_at']))) : '-' ?></div>
+                </div>
 
-                <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:var(--space-md) 0;">
+                <hr class="divider">
 
                 <h3 class="cardTitle">Payment Info</h3>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:var(--text-muted);">Total Paid</span>
-                    <span style="font-size:1.5rem; font-weight:700; color:var(--accent);">€<?= number_format((float)$order['total'], 2) ?></span>
+                <div class="summary-total-bar">
+                    <span class="text-muted">Total Paid</span>
+                    <span class="summary-total-value">€<?= number_format((float)$order['total'], 2) ?></span>
                 </div>
                 
-                <div style="margin-top:var(--space-lg); padding:var(--space-sm); background:rgba(34, 197, 94, 0.1); border-radius:var(--radius-sm); color:var(--success); text-align:center; font-weight:600;">
+                <div class="delivery-note">
                     Paid ✅
                 </div>
             </div>

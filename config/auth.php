@@ -1,15 +1,13 @@
 <?php
 declare(strict_types=1);
 
-/**
- * config/auth.php
- * - session start (once)
- * - login helpers
- */
+
 
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
+
+require_once __DIR__ . "/lang.php";
 
 /** True if logged in */
 function is_logged_in(): bool

@@ -1,0 +1,164 @@
+/* ===== CONTAINERS ===== */
+.container {
+    flex: 1;
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 var(--space-sm);
+}
+
+.main-content {
+    padding: var(--space-lg) 0;
+}
+
+/* ===== GRID ===== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-md);
+}
+
+.grid-2-cols {
+    grid-template-columns: 1fr 1fr;
+}
+
+.grid-3-cols {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.grid-2-1 {
+    grid-template-columns: 2fr 1fr;
+}
+
+.grid-auto-fit-200 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* ===== FLEX ===== */
+.flex {
+    display: flex;
+}
+
+.inline-flex {
+    display: inline-flex;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-start {
+    justify-content: flex-start;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.align-start {
+    align-items: flex-start;
+}
+
+/* ===== GAPS ===== */
+.gap-sm {
+    gap: var(--space-sm);
+}
+
+.gap-md {
+    gap: var(--space-md);
+}
+
+.gap-lg {
+    gap: var(--space-lg);
+}
+
+/* ===== SPACING ===== */
+.m-0 {
+    margin: 0;
+}
+
+.mt-xs {
+    margin-top: var(--space-xs);
+}
+
+.mt-sm {
+    margin-top: var(--space-sm);
+}
+
+.mt-lg {
+    margin-top: var(--space-lg);
+}
+
+.mb-xs {
+    margin-bottom: var(--space-xs);
+}
+
+.mb-sm {
+    margin-bottom: var(--space-sm);
+}
+
+.mb-md {
+    margin-bottom: var(--space-md);
+}
+
+.mb-lg {
+    margin-bottom: var(--space-lg);
+}
+
+.mb-xl {
+    margin-bottom: var(--space-xl);
+}
+
+.p-4 {
+    padding: var(--space-lg);
+}
+
+.py-3xl {
+    padding: 3rem 0;
+}
+
+/* ===== WIDTH AND STATE HELPERS ===== */
+.w-100 {
+    width: 100%;
+}
+
+.cursor-not-allowed {
+    cursor: not-allowed;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+/* ===== LISTS ===== */
+.list-disc {
+    list-style: disc;
+}
+
+.list-indent {
+    margin-left: 1.5rem;
+}
+
+.list-muted {
+    color: var(--text-muted);
+}
+
+.list-spaced li {
+    margin-bottom: 0.5rem;
+}

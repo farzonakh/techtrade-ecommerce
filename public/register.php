@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   } elseif (strlen($password) < 6) {
     $error = "Password must be at least 6 characters";
   } else {
-    // Check if email exists
+    // Check if the email is already registered.
     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->execute([$email]);
 
@@ -50,7 +50,7 @@ include __DIR__ . "/../includes/header.php";
   </div>
 
   <?php if ($error): ?>
-    <div style="background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 0.75rem; border-radius: var(--radius-sm); margin-bottom: 1rem; text-align: center;">
+    <div class="form-message form-message-error">
         <?= htmlspecialchars($error) ?>
     </div>
   <?php endif; ?>
@@ -71,11 +71,11 @@ include __DIR__ . "/../includes/header.php";
         <input name="password" type="password" class="form-input" required placeholder="Min 6 characters">
     </div>
 
-    <button type="submit" class="btn btnPrimary" style="width: 100%; margin-top: 1rem;">Create Account</button>
+    <button type="submit" class="btn btnPrimary form-submit">Create Account</button>
   </form>
 
-  <p class="text-center mt-lg" style="color: var(--text-muted); font-size: 0.9rem;">
-    Already have an account? <a href="/ecommerce/public/login.php" style="color: var(--primary);">Login</a>
+  <p class="text-center mt-lg text-muted text-xs">
+    Already have an account? <a href="/ecommerce/public/login.php" class="link-primary">Login</a>
   </p>
 </div>
 

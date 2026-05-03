@@ -2,7 +2,7 @@
 
 <footer class="footer">
     <div class="container">
-        <p>&copy; <?= date("Y") ?> TechTrade. Built for premium tech enthusiasts.</p>
+        <p>&copy; <?= date("Y") ?> TechTrade. <?= t("footer_text") ?></p>
     </div>
 </footer>
 

@@ -17,26 +17,34 @@ if ($productId <= 0) {
   exit;
 }
 
-// Ensure cart exists
+// Create the cart in the session if this is the first item.
 if (!isset($_SESSION["cart"]) || !is_array($_SESSION["cart"])) {
   $_SESSION["cart"] = [];
 }
 
-// OPTIONAL (but great): Check stock from DB so you can't add more than stock
-$stmt = $pdo->prepare("SELECT stock FROM products WHERE id = ?");
+// Get the latest stock before adding the product to the cart.
+$stmt = $pdo->prepare("SELECT id, name, stock FROM products WHERE id = ?");
 $stmt->execute([$productId]);
-$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$product = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$row) {
+if (!$product) {
+  $_SESSION["cart_error"] = "Oops 😅 Product not found";
   header("Location: /ecommerce/public/index.php");
   exit;
 }
 
-$stock = (int)$row["stock"];
+$stock = (int)$product["stock"];
+$productName = (string)$product["name"];
 $inCartQty = (int)($_SESSION["cart"][$productId] ?? 0);
 
+// Only add the item when there is enough stock available.
 if ($stock > 0 && $inCartQty < $stock) {
   $_SESSION["cart"][$productId] = $inCartQty + 1;
+  $_SESSION["cart_message"] = "{$productName} added to cart ✅";
+} else if ($stock == 0) {
+  $_SESSION["cart_error"] = "Oops 😅 {$productName} is out of stock 📦";
+} else {
+  $_SESSION["cart_error"] = "Stock too low 📦 Only {$stock} {$productName} available.";
 }
 
 header("Location: /ecommerce/public/cart.php");
